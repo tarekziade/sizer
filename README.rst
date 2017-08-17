@@ -10,7 +10,7 @@ does the following steps:
 
 - Run a CoreOS instance of a given VM size
 - Deploy the Docker image of the service on the instance
-- Run the Molotov test on it
+- Run the Molotov test on it, with the autosize feature
 - Shutdown everything
 - Display a report of CPU, Memory and I/O usage for the instance using Glances
 
