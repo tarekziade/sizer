@@ -1,5 +1,6 @@
 import contextlib
 import docker
+from testdrive import run_molotov
 
 
 class Docker(object):
@@ -47,5 +48,6 @@ if __name__ == '__main__':
     d = Docker()
 
     with d.run("kinto/kinto-server", ports={'8888/tcp': 8888}):
-        import pdb; pdb.set_trace()
-        print("do something")
+        run_molotov("https://github.com/tarekziade/sizer", 
+                    "http://localhost:8888/v1/",
+                    "normal")
