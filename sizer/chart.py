@@ -26,23 +26,33 @@ def normalize_csv(filename, container_name):
     os.rename(filename + '.tmp', filename)
 
 
+def get_trace(container_name, data, name, title, field):
+    prefix = 'docker_' + container_name
+    xs = []
+    ys = []
+    for x, y in enumerate(data[prefix + '_' + name]):
+        xs.append(x)
+        # XXX encoding ??!!
+        y = json.loads(y.strip('"').replace("'", '"'))
+        ys.append(y.get(field, 0))
+
+    return go.Scatter(x=xs, y=ys, name=title)
+
 def create_graph(filename, container_name):
     normalize_csv(filename, container_name)
     prefix = 'docker_' + container_name
     df = pd.read_csv(filename)
-    xs = []
-    ys = []
-    for x, y in enumerate(df[prefix + '_cpu']):
-        xs.append(x)
-        # XXX encoding ??!!
-        y = json.loads(y.strip('"').replace("'", '"'))
-        ys.append(y['total'])
-
-    trace = go.Scatter(x=xs, y=ys, name='CPU')
-    layout = go.Layout(title='%s load' % container_name,
+    cpu_trace = get_trace(container_name, df, 'cpu', 'CPU', 'total')
+    memory_trace = get_trace(container_name, df, 'memory', 'Memory', 'usage')
+    rx_trace = get_trace(container_name, df, 'network', 'Network RX', 'cumulative_rx')
+    tx_trace = get_trace(container_name, df, 'network', 'Network TX', 'cumulative_tx')
+    import pdb; pdb.set_trace()
+    io_trace = get_trace(container_name, df, 'io', 'I/O', 'usage')
+    
+    layout = go.Layout(title='%s Resource Usage' % container_name,
                        plot_bgcolor='rgb(230, 230,230)', 
                        showlegend=True)
-    fig = go.Figure(data=[trace], layout=layout)
+    fig = go.Figure(data=[cpu_trace, memory_trace, rx_trace, tx_trace, io_trace], layout=layout)
     plotly.offline.plot(fig, filename='sizer_%s.html' % container_name)
 
 
