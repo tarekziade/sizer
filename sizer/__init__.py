@@ -30,8 +30,10 @@ class Docker(object):
         self.deploy("sizer/glances", pid_mode="host", 
                     volumes=volumes)
         self.deploy(name, **kw)
-        yield
-        self.terminate()
+        try:
+            yield
+        finally:
+            self.terminate()
 
     def terminate(self):
         for cont in self._containers:
