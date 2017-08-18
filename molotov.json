@@ -1,0 +1,18 @@
+{
+    "molotov": {
+        "env": {
+            "SERVER_URL": "http://127.0.0.1:8888/v1/"
+        },
+        "requirements": "requirements.txt",
+        "tests": {
+            "normal": {
+                "console": true,
+                "duration": 10,
+                "exception": true,
+                "processes": 10,
+                "scenario": "loadtest.py",
+                "workers": 100
+            }
+        }
+    }
+}

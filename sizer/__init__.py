@@ -46,7 +46,6 @@ if __name__ == '__main__':
 
     d = Docker()
 
-    with d.run("kinto/kinto-server"):
+    with d.run("kinto/kinto-server", ports={'8888/tcp': 8888}):
+        import pdb; pdb.set_trace()
         print("do something")
-
-
