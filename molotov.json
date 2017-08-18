@@ -6,7 +6,7 @@
         "requirements": "requirements.txt",
         "tests": {
             "normal": {
-                "console": true,
+                "verbose": 1,
                 "duration": 60,
                 "processes": 1,
                 "scenario": "loadtest.py",
