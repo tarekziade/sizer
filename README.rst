@@ -12,7 +12,7 @@ does the following steps:
 - Deploy the Docker image of the service on the instance
 - Run the Molotov test on it, with the autosize feature
 - Shutdown everything
-- Display a report of CPU, Memory and I/O usage for the instance using Glances
+- Display a report of CPU, Memory and I/O usage for the instance using Glances and Plotly
 
 
 Example::
