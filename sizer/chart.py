@@ -46,7 +46,6 @@ def create_graph(filename, container_name):
     memory_trace = get_trace(container_name, df, 'memory', 'Memory', 'usage')
     rx_trace = get_trace(container_name, df, 'network', 'Network RX', 'cumulative_rx')
     tx_trace = get_trace(container_name, df, 'network', 'Network TX', 'cumulative_tx')
-    import pdb; pdb.set_trace()
     io_trace = get_trace(container_name, df, 'io', 'I/O', 'usage')
     
     layout = go.Layout(title='%s Resource Usage' % container_name,
