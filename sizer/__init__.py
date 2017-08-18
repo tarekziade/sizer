@@ -1,6 +1,7 @@
 import contextlib
 import docker
 from testdrive import run_molotov
+from chart import create_graph
 
 
 class Docker(object):
@@ -26,7 +27,8 @@ class Docker(object):
 
     @contextlib.contextmanager
     def run(self, name, **kw):
-        volumes = {'/var/run/docker.sock': {'bind': '/var/run/docker.sock', 'mode': 'ro'}}
+        volumes = {'/var/run/docker.sock': {'bind': '/var/run/docker.sock', 'mode': 'ro'},
+                   '/tmp/glances.csv': {'bind': '/tmp/glances.csv', 'mode': 'rw'}}
         self.deploy("sizer/glances", pid_mode="host", 
                     volumes=volumes)
         self.deploy(name, **kw)
@@ -53,3 +55,5 @@ if __name__ == '__main__':
         run_molotov("https://github.com/tarekziade/sizer", 
                     "http://localhost:8888/v1/",
                     "normal")
+
+    create_graph("/tmp/glances.csv")
