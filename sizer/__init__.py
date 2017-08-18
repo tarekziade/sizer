@@ -24,16 +24,17 @@ class Docker(object):
         cont = self._client.containers.run(name, detach=True, **kw)
         print("%r deployed (%r)" % (cont.name, cont.short_id))
         self._containers.append(cont)
+        return cont
 
     @contextlib.contextmanager
     def run(self, name, **kw):
         volumes = {'/var/run/docker.sock': {'bind': '/var/run/docker.sock', 'mode': 'ro'},
-                   '/tmp/glances.csv': {'bind': '/tmp/glances.csv', 'mode': 'rw'}}
+                   '/tmp/sizerdata': {'bind': '/app/data', 'mode': 'rw'}}
         self.deploy("sizer/glances", pid_mode="host", 
                     volumes=volumes)
-        self.deploy(name, **kw)
+        cont = self.deploy(name, **kw)
         try:
-            yield
+            yield cont
         finally:
             self.terminate()
 
@@ -42,6 +43,8 @@ class Docker(object):
             print("Killing %r (%r)" % (cont.name, cont.short_id))
             try:
                 cont.kill()
+            except docker.errors.APIError:
+                pass
             finally:
                 cont.remove()
 
@@ -51,9 +54,8 @@ if __name__ == '__main__':
 
     d = Docker()
 
-    with d.run("kinto/kinto-server", ports={'8888/tcp': 8888}):
+    with d.run("kinto/kinto-server", ports={'8888/tcp': 8888}) as cont:
         run_molotov("https://github.com/tarekziade/sizer", 
                     "http://localhost:8888/v1/",
                     "normal")
-
-    create_graph("/tmp/glances.csv")
+        create_graph("/tmp/sizerdata/glances.csv", cont.name)
