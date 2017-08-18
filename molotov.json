@@ -7,11 +7,10 @@
         "tests": {
             "normal": {
                 "console": true,
-                "duration": 10,
-                "exception": true,
-                "processes": 10,
+                "duration": "0,
+                "processes": 1,
                 "scenario": "loadtest.py",
-                "workers": 100
+                "workers": 1
             }
         }
     }
