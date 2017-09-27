@@ -1,3 +1,6 @@
 docker
+numpy
+pandas
+boto3
 git+https://github.com/loads/molotov.git#egg=molotov
 plotly

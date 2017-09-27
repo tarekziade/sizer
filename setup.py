@@ -16,8 +16,8 @@ classifiers = ["Programming Language :: Python",
                "Programming Language :: Python :: 3.6"]
 
 
-setup(name='molotov',
-      version="0.13",
+setup(name='sizer',
+      version="0.1",
       url='https://github.com/tarekziade/sizer',
       packages=find_packages(),
       long_description=description.strip(),

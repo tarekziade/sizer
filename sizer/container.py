@@ -4,7 +4,7 @@ import docker
 
 class DockerContainer(object):
     def __init__(self, image_name):
-        self._client = docker.from_env()
+        self._client = docker.from_env(timeout=10)
         self._containers = []
         self.image_name = image_name
 
@@ -19,6 +19,7 @@ class DockerContainer(object):
             kw['tty'] = True
         if 'stdin_open' not in kw:
             kw['stdin_open'] = True
+
         print("Deploying %r" % name)
         cont = self._client.containers.run(name, detach=True, **kw)
         print("%r deployed (%r)" % (cont.name, cont.short_id))
@@ -28,7 +29,7 @@ class DockerContainer(object):
     def run(self, **kw):
         volumes = {'/var/run/docker.sock': {'bind': '/var/run/docker.sock', 'mode': 'ro'},
                    '/tmp/sizerdata': {'bind': '/app/data', 'mode': 'rw'}}
-        self._deploy("sizer/glances", pid_mode="host", 
+        self._deploy("sizer/glances", pid_mode="host",
                     volumes=volumes)
         cont = self._deploy(self.image_name, **kw)
         self.name = cont.name
