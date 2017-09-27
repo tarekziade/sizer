@@ -1,16 +1,19 @@
+import time
+import os
+
 from sizer.testdrive import run_molotov
 from sizer.chart import DockerGraph
-from sizer.container import container
-
+from sizer.ssm import run_service
 
 
 if __name__ == '__main__':
+    with run_service() as ssm:
+        time.sleep(5)
+        server = 'http://%s:8888/v1/' % ssm.ip
+        os.environ['SERVER_URL'] = server
 
-
-    with container("kinto/kinto-server", ports={'8888/tcp': 8888}) as c:
         run_molotov("https://github.com/tarekziade/sizer",
-                    "http://localhost:8888/v1/",
-                    "normal")
+                    server, "normal")
 
-        graph = DockerGraph(c.name, "/tmp/sizerdata/glances.csv")
-        graph.create()
+    graph = DockerGraph("Kinto", "/tmp/sizerdata/glances.csv")
+    graph.create()

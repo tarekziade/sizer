@@ -11,9 +11,14 @@ class TimeoutError(Exception):
     pass
 
 
+def log(msg):
+    print(msg)
+
+
 class SSMClient(object):
     def __init__(self, iid, region_name='eu-west-1', timeout=600):
         self._c = boto3.client('ssm', region_name=region_name)
+        self._b = boto3.client('s3', region_name=region_name)
         self.timeout = timeout
         self.iid = iid
 
@@ -21,6 +26,7 @@ class SSMClient(object):
         res = self._c.send_command(InstanceIds=[self.iid],
                                    DocumentName='AWS-RunShellScript',
                                    Comment='Sizer',
+                                   OutputS3BucketName='tarek-sizer',
                                    Parameters={"commands": [command]})
         cid = res['Command']['CommandId']
         return self._wait(cid)
@@ -38,12 +44,40 @@ class SSMClient(object):
                 res = res['CommandPlugins'][0]
 
                 exit_code = res['ResponseCode']
-                output = res['Output'].split(_DEL)
-                if len(output) == 2:
-                    stdout, stderr = output[0].strip(), output[1].strip()
+                bucket = res.get('OutputS3BucketName')
+
+                if bucket:
+                    prefix = res['OutputS3KeyPrefix']
+                    res = self._b.list_objects_v2(Bucket='tarek-sizer',
+                                                  Prefix=prefix)
+                    keys = [entry['Key'] for entry in res.get('Contents', [])]
+
+                    stdout = [key for key in keys if key.endswith('stdout')]
+                    stderr = [key for key in keys if key.endswith('stderr')]
+
+                    if stdout:
+                        stdout = self._b.get_object(Bucket="tarek-sizer",
+                                                    Key=stdout[0])
+                        stdout = stdout['Body'].read().strip()
+                    else:
+                        stdout = b''
+
+                    if stderr:
+                        stderr = self._b.get_object(Bucket="tarek-sizer",
+                                                    Key=stderr[0])
+                        stderr = stderr['Body'].read().strip()
+                    else:
+                        stderr = b''
+
+                    stdout = stdout.decode('utf8')
+                    stderr = stderr.decode('utf8')
                 else:
-                    stdout = output[0].strip()
-                    stderr = ''
+                    output = res['Output'].split(_DEL)
+                    if len(output) == 2:
+                        stdout, stderr = output[0].strip(), output[1].strip()
+                    else:
+                        stdout = output[0].strip()
+                        stderr = ''
                 return exit_code, stdout, stderr
             time.sleep(1)
         raise TimeoutError()
@@ -52,24 +86,37 @@ class SSMClient(object):
 
 @contextlib.contextmanager
 def run_service(iid='i-0612c54dab69778f7'):
+    log("Starting SSM client on %s" % iid)
     c = SSMClient(iid)
 
     # get the AWS public IP
     c.ip = c.run_command("curl http://169.254.169.254/latest"
                          "/meta-data/public-ipv4")[1]
+    log("Instance IP is %s" % c.ip)
 
     images = []
     # running the glances image
-    cmd = ("docker run -d --rm -v /var/run/docker.sock:/var/run/docker.sock:ro"
-           " -v /tmp/sizerdata:/app/data:rw tarekziade/sizer-glances")
+    log("Updating tarekziade/sizer-glances...")
+    cmd = ("docker pull tarekziade/sizer-glances")
+    c.run_command(cmd)
+
+    log("Starting tarekziade/sizer-glances...")
+    cmd = ("docker run -it -d --rm -v /var/run/docker.sock:/var/run/docker.sock:ro"
+           " -v /tmp/sizerdata:/app/data:rw --pid=host "
+           "tarekziade/sizer-glances")
 
     ex = "glances -C /app/glances.ini --export-csv /app/data/glances.csv"
     cmd = cmd + ' ' + ex
-    images.append(c.run_command(cmd)[1])
+    image_id = c.run_command(cmd)[1]
+    log("%s started" % image_id)
+    images.append(image_id)
 
     # running the service image
-    cmd = 'docker run -t -d -p 8888:8888/tcp --rm kinto/kinto-server'
-    images.append(c.run_command(cmd)[1])
+    log("Starting kinto/kinto-server...")
+    cmd = 'docker run -it -d -p 8888:8888/tcp --rm kinto/kinto-server'
+    image_id = c.run_command(cmd)[1]
+    log("%s started" % image_id)
+    images.append(image_id)
 
     # we're ready
     try:
@@ -77,12 +124,13 @@ def run_service(iid='i-0612c54dab69778f7'):
     finally:
         # shutdown everything
         for image in images:
-            c.run_command("docker terminate " + image)
+            log("Terminating %s" % image)
+            c.run_command("docker kill " + image)
             c.run_command("docker rm " + image)
 
+    log("Grabing metrics...")
 
-if __name__ == '__main__':
-    import requests
-
-    with run_service() as ssm:
-        print(requests.get('http://%s:8888/v1/' % ssm.ip).json())
+    output = c.run_command("cat /tmp/sizerdata/glances.csv")[1]
+    with open('/tmp/sizerdata/glances.csv', 'w') as f:
+        f.write(output)
+    log("All done.")

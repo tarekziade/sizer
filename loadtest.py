@@ -6,7 +6,7 @@ from urllib.parse import urljoin
 import aiohttp
 
 
-SERVER_URL = 'http://127.0.0.1:8888/v1/'
+SERVER_URL = os.environ.get('SERVER_URL', 'http://127.0.0.1:8888/v1/')
 AUTH = aiohttp.BasicAuth("user", "pass")
 
 
