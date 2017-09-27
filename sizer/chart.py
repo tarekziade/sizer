@@ -15,7 +15,7 @@ class DockerGraph(object):
     def __init__(self, container_name, filename):
         self.container_name = container_name
         self.filename = filename
-        self.prefix = 'docker_' + self.container_name
+        self.prefix = 'sensors_' + self.container_name
         self._normalize_csv()
         self._data = pd.read_csv(self.filename)
 
@@ -29,7 +29,7 @@ class DockerGraph(object):
                     if i == 0:
                         rows = len(row)
                     row = row[:rows]
-                    writer.writerow(row)       
+                    writer.writerow(row)
         os.rename(self.filename + '.tmp', self.filename)
 
     def get_trace(self, name, title, field):
@@ -54,7 +54,7 @@ class DockerGraph(object):
                                    ('io', 'I/O', 'usage')):
             traces.append(self.get_trace(name, title, field))
 
-        layout = go.Layout(title=title, plot_bgcolor='rgb(230, 230,230)', 
+        layout = go.Layout(title=title, plot_bgcolor='rgb(230, 230,230)',
                            showlegend=True)
         fig = go.Figure(data=traces, layout=layout)
         plotly.offline.plot(fig, filename='sizer_%s.html' % self.container_name)

@@ -94,7 +94,19 @@ def run_service(iid='i-0612c54dab69778f7'):
                          "/meta-data/public-ipv4")[1]
     log("Instance IP is %s" % c.ip)
 
+    c.run_command("rm -rf /tmp/sizerdata")
+    c.run_command("mkdir /tmp/sizerdata")
     images = []
+
+    # running the service image
+    log("Starting kinto/kinto-server...")
+    cmd = 'docker run --name tested -it -d -p 8888:8888/tcp --rm kinto/kinto-server'
+    image_id = c.run_command(cmd)[1]
+    log("%s started" % image_id)
+    images.append(image_id)
+
+    c.container_name = 'tested'
+
     # running the glances image
     log("Updating tarekziade/sizer-glances...")
     cmd = ("docker pull tarekziade/sizer-glances")
@@ -102,18 +114,11 @@ def run_service(iid='i-0612c54dab69778f7'):
 
     log("Starting tarekziade/sizer-glances...")
     cmd = ("docker run -it -d --rm -v /var/run/docker.sock:/var/run/docker.sock:ro"
-           " -v /tmp/sizerdata:/app/data:rw --pid=host "
+           " --name glances -v /tmp/sizerdata:/app/data:rw --pid=host "
            "tarekziade/sizer-glances")
 
     ex = "glances -C /app/glances.ini --export-csv /app/data/glances.csv"
     cmd = cmd + ' ' + ex
-    image_id = c.run_command(cmd)[1]
-    log("%s started" % image_id)
-    images.append(image_id)
-
-    # running the service image
-    log("Starting kinto/kinto-server...")
-    cmd = 'docker run -it -d -p 8888:8888/tcp --rm kinto/kinto-server'
     image_id = c.run_command(cmd)[1]
     log("%s started" % image_id)
     images.append(image_id)

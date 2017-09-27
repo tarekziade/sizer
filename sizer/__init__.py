@@ -15,5 +15,6 @@ if __name__ == '__main__':
         run_molotov("https://github.com/tarekziade/sizer",
                     server, "normal")
 
-    graph = DockerGraph("Kinto", "/tmp/sizerdata/glances.csv")
+    graph = DockerGraph(ssm.container_name,
+                        "/tmp/sizerdata/glances.csv")
     graph.create()

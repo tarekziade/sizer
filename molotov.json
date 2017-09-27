@@ -3,10 +3,8 @@
         "tests": {
             "normal": {
                 "verbose": 1,
-                "duration": 60,
-                "processes": 1,
                 "scenario": "loadtest.py",
-                "workers": 1
+                "sizing": true
             }
         }
     }
