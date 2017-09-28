@@ -5,7 +5,7 @@
                 "verbose": 1,
                 "scenario": "loadtest.py",
                 "sizing": true,
-                "sizing_tolerance": 3,
+                "sizing_tolerance": 10,
                 "ramp_up": 300
             }
         }
