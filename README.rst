@@ -38,8 +38,13 @@ Once this is in place, sizer can be executed from the command-line with::
     ...
 
 
-
+The first run will take ages because the tool needs to deploy an
+SSM-enabled EC2 instance and that takes a while. But once it's done
+it should be fairly fast on the next runs.
 
 When instances are created, they are left on AWS to be reused or
 can be wiped out after the test is over with an option.
+
+If you don't wipe them, the REAPER will automatically do it after some
+time.
 
