@@ -21,11 +21,20 @@ class SSMClient(object):
         self._b = boto3.client('s3', region_name=region_name)
         self.timeout = timeout
         self.iid = iid
+        describe = self._c.describe_instance_information
+
+        iids = [i['InstanceId'] for i in
+                describe()['InstanceInformationList']]
+
+        if self.iid not in iids:
+            raise ValueError('%r is not listed as SSM compatible' % iid)
+
 
     def run_command(self, command):
         res = self._c.send_command(InstanceIds=[self.iid],
                                    DocumentName='AWS-RunShellScript',
                                    Comment='Sizer',
+                                   TimeoutSeconds=240,
                                    OutputS3BucketName='tarek-sizer',
                                    Parameters={"commands": [command]})
         cid = res['Command']['CommandId']
@@ -79,7 +88,10 @@ class SSMClient(object):
                         stdout = output[0].strip()
                         stderr = ''
                 return exit_code, stdout, stderr
-            time.sleep(1)
+            elif status in ("Pending", "InProgress"):
+                time.sleep(3)
+            else:
+                raise ValueError(str(res))
         raise TimeoutError()
 
 
@@ -90,6 +102,7 @@ def run_service(iid='i-0612c54dab69778f7'):
     c = SSMClient(iid)
 
     # get the AWS public IP
+    log("Getting the instance public IP...")
     c.ip = c.run_command("curl http://169.254.169.254/latest"
                          "/meta-data/public-ipv4")[1]
     log("Instance IP is %s" % c.ip)

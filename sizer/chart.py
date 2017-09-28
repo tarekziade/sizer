@@ -32,14 +32,20 @@ class DockerGraph(object):
                     writer.writerow(row)
         os.rename(self.filename + '.tmp', self.filename)
 
-    def get_trace(self, name, title, field):
+    def get_trace(self, name, title, field, op=None):
         xs = []
         ys = []
         for x, y in enumerate(self._data[self.prefix + '_' + name]):
-            xs.append(x)
             # XXX encoding ??!!
-            y = json.loads(y.strip('"').replace("'", '"'))
-            ys.append(y.get(field, 0))
+            try:
+                y = json.loads(y.strip('"').replace("'", '"'))
+                value = y.get(field, 0)
+                if op is not None:
+                    value = op(value)
+                ys.append(value)
+            except Exception as e:
+                continue
+            xs.append(x)
 
         return go.Scatter(x=xs, y=ys, name=title)
 
@@ -47,12 +53,17 @@ class DockerGraph(object):
         if title is None:
             title = '%s Resource Usage' % self.container_name
         traces = []
-        for name, title, field in (('cpu', 'CPU', 'total'),
-                                   ('memory', 'Memory', 'usage'),
-                                   ('network', 'Network RX', 'cumulative_rx'),
-                                   ('network', 'Network TX', 'cumulative_tx'),
-                                   ('io', 'I/O', 'usage')):
-            traces.append(self.get_trace(name, title, field))
+        for name, ltitle, field in (('cpu', 'CPU', 'total'),
+                                    ('memory', 'Memory', 'usage'),
+                                    ('network', 'Network RX', 'cumulative_rx'),
+                                    ('network', 'Network TX', 'cumulative_tx'),
+                                    ('io', 'I/O', 'usage')):
+            if name == 'cpu':
+                op = lambda x: x / 10.
+            else:
+                op = lambda x: x
+
+            traces.append(self.get_trace(name, ltitle, field, op))
 
         layout = go.Layout(title=title, plot_bgcolor='rgb(230, 230,230)',
                            showlegend=True)
