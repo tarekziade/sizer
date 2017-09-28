@@ -1,4 +1,5 @@
 requests
+humanize
 docker
 numpy
 pandas
