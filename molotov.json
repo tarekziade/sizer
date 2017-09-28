@@ -1,7 +1,7 @@
 {
     "molotov": {
         "tests": {
-            "normal": {
+            "sizer": {
                 "verbose": 1,
                 "scenario": "loadtest.py",
                 "sizing": true,

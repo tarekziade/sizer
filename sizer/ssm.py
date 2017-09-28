@@ -2,6 +2,7 @@ import sys
 import boto3
 import time
 import contextlib
+from sizer.util import log
 
 
 _DEL = "----------ERROR-------"
@@ -9,10 +10,6 @@ _DEL = "----------ERROR-------"
 
 class TimeoutError(Exception):
     pass
-
-
-def log(msg):
-    print(msg)
 
 
 class SSMClient(object):
@@ -97,7 +94,7 @@ class SSMClient(object):
 
 
 @contextlib.contextmanager
-def run_service(iid='i-0612c54dab69778f7'):
+def run_service(docker, iid='i-0612c54dab69778f7'):
     log("Starting SSM client on %s" % iid)
     c = SSMClient(iid)
 
@@ -112,8 +109,9 @@ def run_service(iid='i-0612c54dab69778f7'):
     images = []
 
     # running the service image
-    log("Starting kinto/kinto-server...")
-    cmd = 'docker run --name tested -it -d -p 8888:8888/tcp --rm kinto/kinto-server'
+    log("Starting %s..." % docker)
+    cmd = 'docker run --name tested -it -d -p 8888:8888/tcp --rm %s'
+    cmd = cmd % docker
     image_id = c.run_command(cmd)[1]
     log("%s started" % image_id)
     images.append(image_id)

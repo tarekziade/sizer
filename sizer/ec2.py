@@ -1,5 +1,6 @@
 import boto3
 import time
+from sizer.util import log
 
 
 _USER_DATA = """\
@@ -13,9 +14,6 @@ sudo start amazon-ssm-agent
 
 
 _AMIS = {'eu-west-1': 'ami-ebd02392'}
-
-def log(msg):
-    print(msg)
 
 
 def launch_instance(region='eu-west-1', instance_type='t2.micro'):

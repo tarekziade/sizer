@@ -2,27 +2,44 @@
 Sizer
 =====
 
-Sizer uses Glances, Molotov, Docker and AWS to try to perform a sizing for a
-web service.
 
-Given a Molotov test and a Docker image for the service, Sizer
-does the following steps:
+Sizer deploys a Docker on AWS and load tests it until it breaks,
+then reports on the CPU, Memory, Network and I/O usage.
 
-- Run a CoreOS instance of a given VM size
-- Deploy the Docker image of the service on the instance
-- Run the Molotov test on it, with the autosize feature
-- Shutdown everything
-- Display a report of CPU, Memory and I/O usage for the instance using Glances and Plotly
+This tool can be useful to get a sense of how an application
+behaves under stress.
 
+Before you can use sizer, you need the following:
 
-Example::
+- A Docker image of the service to test.
+- A Molotov test that runs against the service.
+- A new url in the service book in the tests, called "sizer".
+  The url is the URL of the Molotov repo, followed by "#" and the name of the docker
+  image.
 
-    $ sizer --vm-instance=m4.large --docker=kintowe --molotov https://github.com/testrepo
-    Starting a m4.large with CoreOS... OK
-    Setting up probes... OK
-    Deploying kintowe... OK
-    Running Molotov...
+For testing a Kinto server, the values can be:
+
+- Docker: kinto/kinto-server
+- Molotov Repo: https://github.com/tarekziade/sizer
+- "sizer" entry in the service book: https://github.com/tarekziade/sizer#kinto/kinto-server
+
+Next, make sure you have an Amazon user with the AmazonSSMFullAccess permission
+and a valid ~/.boto configuration file.
+
+Once this is in place, sizer can be executed from the command-line with::
+
+    $ sizer kinto
+    Reading the servicebook
+    Reusing Instance 'i-06a6057664002caab'
+    Starting SSM client on i-06a6057664002caab
+    Getting the instance public IP...
+    Instance IP is 54.154.224.238
+    Starting kinto/kinto-server...
     ...
-    Shutting down everything... OK
 
+
+
+
+When instances are created, they are left on AWS to be reused or
+can be wiped out after the test is over with an option.
 
