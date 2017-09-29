@@ -1,4 +1,3 @@
-import sys
 import boto3
 import time
 import contextlib
@@ -13,8 +12,12 @@ class TimeoutError(Exception):
 
 
 class SSMClient(object):
-    def __init__(self, iid, region_name='eu-west-1', timeout=600):
-        self._c = boto3.client('ssm', region_name=region_name)
+    def __init__(self, iid, region_name='eu-west-1', timeout=30,
+                 ssm_client=None):
+        if ssm_client:
+            self._c = ssm_client
+        else:
+            self._c = boto3.client('ssm', region_name=region_name)
         self._b = boto3.client('s3', region_name=region_name)
         self.timeout = timeout
         self.iid = iid
@@ -26,16 +29,21 @@ class SSMClient(object):
         if self.iid not in iids:
             raise ValueError('%r is not listed as SSM compatible' % iid)
 
-
     def run_command(self, command):
         res = self._c.send_command(InstanceIds=[self.iid],
                                    DocumentName='AWS-RunShellScript',
                                    Comment='Sizer',
-                                   TimeoutSeconds=240,
+                                   TimeoutSeconds=30,
                                    OutputS3BucketName='tarek-sizer',
                                    Parameters={"commands": [command]})
         cid = res['Command']['CommandId']
-        return self._wait(cid)
+        attempts = 0
+        while attempts < 2:
+            try:
+                return self._wait(cid)
+            except TimeoutError:
+                attempts += 1
+        raise TimeoutError()
 
     def _wait(self, cid):
         start = time.time()
@@ -92,11 +100,10 @@ class SSMClient(object):
         raise TimeoutError()
 
 
-
 @contextlib.contextmanager
-def run_service(docker, iid='i-0612c54dab69778f7'):
+def run_service(docker, iid='i-0612c54dab69778f7', ssm_client=None):
     log("Starting SSM client on %s" % iid)
-    c = SSMClient(iid)
+    c = SSMClient(iid, ssm_client=ssm_client)
 
     # get the AWS public IP
     log("Getting the instance public IP...")
@@ -124,8 +131,9 @@ def run_service(docker, iid='i-0612c54dab69778f7'):
     c.run_command(cmd)
 
     log("Starting tarekziade/sizer-glances...")
-    cmd = ("docker run -it -d --rm -v /var/run/docker.sock:/var/run/docker.sock:ro"
-           " --name glances -v /tmp/sizerdata:/app/data:rw --pid=host "
+    cmd = ("docker run -it -d --rm "
+           "-v /var/run/docker.sock:/var/run/docker.sock:ro "
+           "--name glances -v /tmp/sizerdata:/app/data:rw --pid=host "
            "tarekziade/sizer-glances")
 
     ex = "glances -C /app/glances.ini --export-csv /app/data/glances.csv"

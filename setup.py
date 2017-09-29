@@ -16,7 +16,7 @@ classifiers = ["Programming Language :: Python",
                "Programming Language :: Python :: 3.6"]
 
 
-setup(name='sizer',
+setup(name='autosizer',
       version="0.1",
       url='https://github.com/tarekziade/sizer',
       packages=find_packages(),
@@ -27,4 +27,8 @@ setup(name='sizer',
       include_package_data=True,
       zip_safe=False,
       classifiers=classifiers,
-      install_requires=install_requires)
+      install_requires=install_requires,
+      entry_points="""
+      [console_scripts]
+      autosizer = sizer:main
+      """)

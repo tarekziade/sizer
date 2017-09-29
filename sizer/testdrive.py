@@ -1,4 +1,4 @@
-import asyncio 
+import asyncio
 import sys
 from molotov.slave import main as moloslave
 

@@ -1,17 +1,12 @@
+import os
 import boto3
 import time
 from sizer.util import log
 
 
-_USER_DATA = """\
-#!/bin/bash
-cd /tmp
-sudo yum install -y https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/linux_amd64/amazon-ssm-agent.rpm
-sudo yum install -y docker
-sudo service docker start
-sudo start amazon-ssm-agent
-"""
-
+_UD = os.path.join(os.path.dirname(__file__), 'user_data.sh')
+with open(_UD) as f:
+    _USER_DATA = f.read()
 
 _AMIS = {'eu-west-1': 'ami-ebd02392'}
 
@@ -42,13 +37,9 @@ def launch_instance(region='eu-west-1', instance_type='t2.micro'):
 
     # IAM roles
     log('Applying IAM roles...')
-    response = ec2.meta.client.associate_iam_instance_profile(
-        IamInstanceProfile = {
-            'Name': 'tarek_autosizer'
-        },
-        InstanceId=iid
-    )
-
+    profile = {'Name': 'tarek_autosizer'}
+    ec2.meta.client.associate_iam_instance_profile(IamInstanceProfile=profile,
+                                                   InstanceId=iid)
     log('Wait for IAM role to be effective...')
     ssm = boto3.client('ssm', region_name=region)
     describe = ssm.describe_instance_information
@@ -61,4 +52,4 @@ def launch_instance(region='eu-west-1', instance_type='t2.micro'):
             break
         time.sleep(10.)
 
-    return iid
+    return iid, ssm

@@ -1,12 +1,9 @@
 import json
 import os
 import csv
-import plotly.plotly as py
 import plotly.graph_objs as go
-import plotly.figure_factory as FF
 import plotly
 
-import numpy as np
 import pandas as pd
 
 
@@ -68,4 +65,5 @@ class DockerGraph(object):
         layout = go.Layout(title=title, plot_bgcolor='rgb(230, 230,230)',
                            showlegend=True)
         fig = go.Figure(data=traces, layout=layout)
-        plotly.offline.plot(fig, filename='sizer_%s.html' % self.container_name)
+        plotly.offline.plot(fig,
+                            filename='sizer_%s.html' % self.container_name)

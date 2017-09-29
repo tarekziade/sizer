@@ -28,14 +28,25 @@ and a valid ~/.boto configuration file.
 
 Once this is in place, sizer can be executed from the command-line with::
 
-    $ sizer kinto
-    Reading the servicebook
-    Reusing Instance 'i-06a6057664002caab'
-    Starting SSM client on i-06a6057664002caab
-    Getting the instance public IP...
-    Instance IP is 54.154.224.238
-    Starting kinto/kinto-server...
+    $ autosizer kinto --instance-type=t2.medium
+    [Now] Reading the servicebook
+    [3 seconds ago] Starting an instance...
+    [6 seconds ago] Instance 'i-0792ba66b4e6f00bb' created
+    [6 seconds ago] Wait for the instance to run
+    [21 seconds ago] Wait for all statuses to be green
+    [4 minutes ago] Starting SSM client on i-06a6057664002caab
+    [4 minutes ago] Getting the instance public IP...
+    [5 minutes ago] Instance IP is 54.154.224.238
+    [5 minutes ago] Starting kinto/kinto-server...
     ...
+    OVERALL: SUCCESSES: 10966 | FAILURES: 264
+    LAST MINUTE: SUCCESSES: 1606 | FAILURES: 146
+    *** Bye ***
+    [7 minutes ago] Terminating 2a0f9b1d69bfed44b55cb686ca904a273e4188d1f0304d5577545ed7d1a48513
+    [7 minutes ago] Terminating 621e49af485ba17e6ed0e59842939f7085837cc50fba156d021550187e5b0327
+    [7 minutes ago] Grabing metrics...
+    [7 minutes ago] All done.
+
 
 
 The first run will take ages because the tool needs to deploy an
