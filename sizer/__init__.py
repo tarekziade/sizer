@@ -100,7 +100,6 @@ def main(args=None):
                 # XXX
                 server += '/v1/'
             os.environ['URL_SERVER'] = os.environ['SERVER_URL'] = server
-            import pdb; pdb.set_trace()
             run_molotov(molotov_url, server, "sizer")
 
         graph = DockerGraph("tested",
