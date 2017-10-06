@@ -16,9 +16,9 @@ SB = 'https://servicebook-api.stage.mozaws.net/api/project'
 
 def _parser():
     parser = argparse.ArgumentParser(description='Autosizer.')
-
     parser.add_argument('project_name', help="name of the project")
-
+    parser.add_argument('--port', help="Service port", type=int,
+                        default=8888)
     parser.add_argument('--instance-type', default="t2.micro", type=str,
                         help="AWS Instance Type",
                         choices=['t2.micro', 't2.small', 't2.medium',
@@ -51,7 +51,16 @@ def main(args=None):
         if project['name'].lower() == project_name.lower():
             for test in project['tests']:
                 if test['name'].lower() == 'sizer':
-                    molotov_url, docker = test['url'].split('#')
+                    try:
+                        molotov_url, docker = test['url'].split('#')
+                    except ValueError:
+                        log("The project has a sizer "
+                            "test but it looks malformed")
+                        log("Expected https://github.com/<org>/<project>"
+                            "#<docker_name>")
+                        log("Got %r" % test['url'])
+                        sys.exit(1)
+                        return
             if molotov_url is None:
                 log("The project was found but it misses a sizer test")
                 sys.exit(1)
@@ -84,10 +93,14 @@ def main(args=None):
         log("Reusing Instance %r" % iid)
 
     try:
-        with run_service(docker, iid, ssm_client) as ssm:
+        with run_service(docker, iid, ssm_client, args.port) as ssm:
             time.sleep(5)
-            server = 'http://%s:8888/v1/' % ssm.ip
-            os.environ['SERVER_URL'] = server
+            server = 'http://%s:%s' % (ssm.ip, args.port)
+            if docker == 'kinto':
+                # XXX
+                server += '/v1/'
+            os.environ['URL_SERVER'] = os.environ['SERVER_URL'] = server
+            import pdb; pdb.set_trace()
             run_molotov(molotov_url, server, "sizer")
 
         graph = DockerGraph("tested",

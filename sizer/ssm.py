@@ -1,3 +1,4 @@
+import os
 import boto3
 import time
 import contextlib
@@ -101,7 +102,8 @@ class SSMClient(object):
 
 
 @contextlib.contextmanager
-def run_service(docker, iid='i-0612c54dab69778f7', ssm_client=None):
+def run_service(docker, iid='i-0612c54dab69778f7', ssm_client=None,
+                port=8888):
     log("Starting SSM client on %s" % iid)
     c = SSMClient(iid, ssm_client=ssm_client)
 
@@ -117,8 +119,9 @@ def run_service(docker, iid='i-0612c54dab69778f7', ssm_client=None):
 
     # running the service image
     log("Starting %s..." % docker)
-    cmd = 'docker run --name tested -it -d -p 8888:8888/tcp --rm %s'
-    cmd = cmd % docker
+    port = '%d:%d/tcp' % (port, port)
+    cmd = 'docker run --name tested -it -d -p %s --rm %s'
+    cmd = cmd % (port, docker)
     image_id = c.run_command(cmd)[1]
     log("%s started" % image_id)
     images.append(image_id)
@@ -155,6 +158,8 @@ def run_service(docker, iid='i-0612c54dab69778f7', ssm_client=None):
     log("Grabing metrics...")
 
     output = c.run_command("cat /tmp/sizerdata/glances.csv")[1]
+    if not os.path.exists('/tmp/sizerdata'):
+        os.makedirs('/tmp/sizerdata')
     with open('/tmp/sizerdata/glances.csv', 'w') as f:
         f.write(output)
     log("All done.")
